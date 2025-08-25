@@ -1,0 +1,44 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite" // Will be dynamically set based on DATABASE_URL
+  url      = env("DATABASE_URL")
+}
+
+model Application {
+  id              String   @id @default(cuid())
+  name            String   @unique
+  keyPrefix       String   // e.g., "sk-proj-{id}-{label}-"
+  prefixLabel     String   // Custom label for the key prefix (e.g., "myapp", "test")
+  defaultTemplate String   // Default key-value template as JSON string
+  clientSecret    String   @unique // Application client secret for validation
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  apiKeys         ApiKey[]
+}
+
+model ApiKey {
+  id            String      @id @default(cuid())
+  keyValue      String      @unique // Full API key (for display, will be masked)
+  keyHash       String      @unique // SHA-256 hash for validation
+  metadata      String?     // Optional metadata (can be JSON, username, or any string)
+  applicationId String
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  
+  application   Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+}
+
+model AdminSession {
+  id        String   @id @default(cuid())
+  sessionId String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+}
+
